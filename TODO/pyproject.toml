@@ -1,0 +1,41 @@
+[tool.poetry]
+name        = "LLM-Fine-Tuning"
+version     = "0.1.0"
+description = "Download HF LLMs, apply memory-optimizations from scratch, compare mnemory usage and run inference on models"
+authors     = ["Alex (AJ) Mason"]
+license     = "MIT"
+
+[tool.poetry.dependencies]
+python       = "^3.12"
+torch        = ">=2.4.1"       
+numpy        = ">=2.2.1"       
+transformers = "^4.30.0"       
+peft         = "^0.4.0"        # if needed for quick LoRA/QLoRA baselines
+bitsandbytes = "^0.39.0"       # for reference quantization compared to manual implementation
+psutil       = "^5.9"          # measuring memory usage
+
+[tool.poetry.dev-dependencies]
+pytest       = "^7.2"
+black        = "^23.3"
+isort        = "^5.10"
+flake8       = "^6.0"
+mypy         = "^0.991"
+pre-commit   = "^3.4"
+
+[build-system]
+requires       = ["poetry-core>=1.0.0"]
+build-backend  = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+
+[tool.isort]
+profile = "black"
+
+[tool.flake8]
+max-line-length  = 88
+extend-ignore    = ["E203", "W503"]
+
+[tool.mypy]
+python_version        = "3.9"
+ignore_missing_imports = true

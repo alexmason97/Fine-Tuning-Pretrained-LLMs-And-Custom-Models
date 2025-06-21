@@ -1,0 +1,13 @@
+# — Virtual Environments —
+venv/
+
+# — Python bytecode & caches —
+__pycache__/
+*.py[cod]
+*$py.class
+
+# — Jupyter Notebook checkpoints —
+.ipynb_checkpoints/
+
+# — VS Code workspace settings —
+.vscode/

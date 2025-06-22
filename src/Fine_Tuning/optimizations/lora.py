@@ -25,7 +25,7 @@ class LoraLinear(nn.Linear):
         self.lora_dropout = nn.Dropout(p=config.dropout)
         self.lora_A = nn.Parameter(torch.zeros((self.rank, in_features)))
         self.lora_B = nn.Parameter(torch.zeros((out_features, self.rank)))
-        # need to initialize dist with sqrt(5) to match PyTorch init w/ weights  
+        # NOTE TO SELF: needed to initialize dist with sqrt(5) to match PyTorch init w/ weights  
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
         nn.init.zeros_(self.lora_B)
         
@@ -38,16 +38,22 @@ class LoraLinear(nn.Linear):
         return forward_pass_result
     
 class LoraBFloat16Linear(BFloat16Linear):
-    def __init__(self, in_features: int, out_features: int, config: LoraConfig, **kwargs: int):
-        super().__init__(in_features, out_features, bias=kwargs.get("bias", True))
-        self.rank = config.rank
-        self.alpha = config.alpha
-        self.scaling = self.alpha / self.rank
-        self.lora_dropout = nn.Dropout(p=config.dropout)
-        self.lora_A = nn.Parameter(torch.zeros((self.rank, in_features)))
-        self.lora_B = nn.Parameter(torch.zeros((out_features, self.rank)))
-        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
-        nn.init.zeros_(self.lora_B)
+    lora_a: torch.nn.Module
+    lora_b: torch.nn.Module
+
+    def __init__(
+        self,
+        in_features: int,
+        out_features: int,
+        lora_dim: int,
+        bias: bool = True,
+    ) -> None:
+        super().__init__(in_features, out_features, bias)
+        self.lora_a = torch.nn.Linear(in_features, lora_dim, bias=False)
+        self.lora_b = torch.nn.Linear(lora_dim, out_features, bias=False)
+        
+        torch.nn.init.kaiming_uniform_(self.lora_a.weight)        
+        torch.nn.init.zeros_(self.lora_b.weight)
 
     @classmethod
     def from_float(cls, module: nn.Linear, config: LoraConfig):
@@ -58,13 +64,8 @@ class LoraBFloat16Linear(BFloat16Linear):
             layer.bias.data.copy_(module.bias.data.to(torch.bfloat16))
         return layer
 
-    def forward(self, x: torch.Tensor):
-        forward_pass_result = super().forward(x)
-        if self.rank > 0:
-            lora_output = self.lora_B @ self.lora_A
-            lora_output = self.lora_dropout(x) @ lora_output.T
-            forward_pass_result = forward_pass_result + lora_output * self.scaling
-        return forward_pass_result
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return super().forward(x) + self.lora_b(self.lora_a(x))
     
 def apply_lora(model: nn.Module, config: Optional[LoraConfig] = None, device: str = "cpu"):
     

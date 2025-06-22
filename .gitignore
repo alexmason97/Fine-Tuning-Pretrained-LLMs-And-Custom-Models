@@ -11,3 +11,14 @@ __pycache__/
 
 # — VS Code workspace settings —
 .vscode/
+
+#Powerpoint files 
+*.pptx
+
+# Dataset resources 
+
+data/
+
+# large pytorch files
+*.pth 
+*.pt

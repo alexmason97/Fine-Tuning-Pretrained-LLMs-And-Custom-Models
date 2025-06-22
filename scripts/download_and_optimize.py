@@ -32,7 +32,7 @@ def main() -> None:
     print(f"Prompt: {args.prompt}")
     print(f"Response:")
     print(generate(model, tokenizer, args.prompt))
-    print(f"Base model size: {base_size / 1e6:.2f} MB") # bytes to MB 
+    print(f"Base model size: {base_size / 1e6:.2f} MB") # bytes to MB for better viz
     
     if args.impl == "scratch":
         bf16_model = apply_bfloat16(model)

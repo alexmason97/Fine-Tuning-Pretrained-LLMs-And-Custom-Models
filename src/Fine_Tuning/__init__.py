@@ -1,5 +1,5 @@
 from .optimizations.lora import LoraConfig, LoraLinear, apply_lora 
-from .optimizations.qlora import QLoraConfig, QLoraLinear, apply_qlora 
+from .optimizations.qlora import QLoraConfig, QLoRALinear, apply_qlora 
 from .optimizations.lora import (
     LoraConfig,
     LoraLinear,
@@ -8,7 +8,7 @@ from .optimizations.lora import (
 )
 from .optimizations.qlora import (
     QLoraConfig,
-    QLoraLinear,
+    QLoRALinear,
     apply_qlora,
     apply_qlora_peft,
 )

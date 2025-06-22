@@ -36,13 +36,9 @@ def block_dequantize_4bit(
     return x.view(-1)
 
 class Linear4Bit(nn.Module):
-    
-    def __init__(
-        self, in_features: int, out_features: int, bias: bool = True, group_size: int = 16,
-    ):
-        super().__init()
-        self.in_features = in_features
-        self.out_features = out_features
+    def __init__(self, in_features: int, out_features: int, bias: bool = True, group_size: int = 16):
+        super().__init__()
+        self._shape = (out_features, in_features)
         self.group_size = group_size
         
         self.register_buffer(
@@ -62,10 +58,19 @@ class Linear4Bit(nn.Module):
             persistent=False,
         )
         
-        if bias: 
-            self.bias = nn.Parameter(torch.zeros(out_features, dtype=torch.float32))
-        else:
-            self.register_parameter("bias", None) 
+        self._register_load_state_dict_pre_hook(Linear4Bit._load_state_dict_pre_hook, with_module=True)
+        self.bias = None
+        if bias:
+            self.bias = torch.nn.Parameter(torch.zeros(out_features, dtype=torch.float32))
+        
+    def _load_state_dict_pre_hook(self, state_dict, prefix):
+        if f"{prefix}weight" in state_dict:
+            weight = state_dict[f"{prefix}weight"]
+            del state_dict[f"{prefix}weight"]
+            flattened_weight = weight.view(-1)
+            bit4_q, max_v = block_quantize_4bit(flattened_weight, self._group_size)
+            self.weight_q4.copy_(bit4_q)
+            self.weight_norm.copy_(max_v)
             
     @classmethod 
     def from_float(cls, module: nn.Linear, group_size: int = 16):
@@ -79,11 +84,12 @@ class Linear4Bit(nn.Module):
         layer.weight_q4.copy_(q4)
         layer.weight_norm.copy_(norm)
         return layer
-            
-    def forward(self, x: torch.Tensor):
-        forward_pass_result = block_dequantize_4bit(self.weight_q4, self.weight_norm)
-        forward_pass_result = forward_pass_result.view(self.out_features)
-        return F.linear(x, forward_pass_result, self.bias)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        with torch.no_grad():
+            flat = block_dequantize_4bit(self.weight_q4, self.weight_norm)
+            W_vector = flat.view(self._shape)
+            return F.linear(x, W_vector, self.bias)
     
 def quantize_4bit(model: nn.Module, group_size: int = 16):
     for name, module in model.named_children():

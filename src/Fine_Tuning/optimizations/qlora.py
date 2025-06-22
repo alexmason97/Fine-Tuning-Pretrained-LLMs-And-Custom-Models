@@ -17,31 +17,30 @@ from .quantization import Linear4Bit, quantize_bnb_4bit
 @dataclass
 class QLoraConfig:
     
-    rank: int = 4
-    alpha: int = 32 
-    dropout: float = 0.0 
+    rank: int = 32
+    alpha: int = 16
+    dropout: float = 0.05
     
-class QLoraLinear(nn.Module):
-    
+class QLoRALinear(Linear4Bit):
     def __init__(
-        self, in_features: int, out_features: int, config: QLoraConfig, **kwargs: int
-    ):
-        super().__init__()
-        self.rank = config.rank 
-        self.alpha = config.alpha 
-        self.scaling = self.alpha / self.rank 
-        self.lora_dropout = nn.Dropout(p=config.dropout)
-        self.lora_A = nn.Parameter(torch.zeros((self.rank, in_features)))
-        self.lora_B = nn.Parameter(torch.zeros((out_features, self.rank)))
-        nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
-        nn.init.zeros_(self.lora_B)
+        self,
+        in_features: int,
+        out_features: int,
+        lora_dim: int,
+        group_size: int = 16,
+        bias: bool = True,
+    ) -> None:
+        super().__init__(in_features, out_features, bias, group_size)
+        self.requires_grad_(False)
+
+        # TODO: Implement LoRA, initialize the layers, and make sure they are trainable
+        self.lora_a = torch.nn.Linear(in_features, lora_dim, bias=False)
+        self.lora_b = torch.nn.Linear(lora_dim, out_features, bias=False)
         
-        bias_flag = kwargs.get("bias", True)
-        if Linear4bit is not None:
-            self.base = Linear4bit(in_features, out_features, bias=bias_flag)
-        else:
-            self.base = Linear4Bit(in_features, out_features, bias=bias_flag)
-        
+        torch.nn.init.kaiming_uniform_(self.lora_a.weight)
+        torch.nn.init.zeros_(self.lora_b.weight)
+
+    
     @classmethod
     def from_float(cls, module: nn.Linear, config: QLoraConfig):
         layer = cls(
@@ -58,11 +57,9 @@ class QLoraLinear(nn.Module):
                 layer.base.bias.data.copy_(module.bias.data)
         return layer   
           
-    def forward(self, x: torch.Tensor):
-        forward_pass_result = self.base(x)
-        lora_output = self.lora_B @ self.lora_A 
-        lora_output = self.lora_dropout(x) @ lora_output.T
-        return forward_pass_result + lora_output * self.scaling
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return super().forward(x) + self.lora_b(self.lora_a(x))
+        
     
 def apply_qlora(model: nn.Module, config: Optional[QLoraConfig] = None):
     
@@ -71,7 +68,7 @@ def apply_qlora(model: nn.Module, config: Optional[QLoraConfig] = None):
         
     for name, module in model.named_children():
         if isinstance(module, nn.Linear):
-            setattr(model, name, QLoraLinear.from_float(module, config))
+            setattr(model, name, QLoRALinear.from_float(module, config))
         else:
             apply_qlora(module, config)  
     return model 

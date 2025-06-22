@@ -44,4 +44,8 @@ def apply_bfloat16(model: nn.Module):
         else:
             apply_bfloat16(module)
     return model
-        
+
+
+def apply_bfloat16_torch(model: nn.Module, device: str = "cpu"):
+    
+    return model.to(device=device, dtype=torch.bfloat16)

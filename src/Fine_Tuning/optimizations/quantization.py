@@ -63,7 +63,7 @@ class Linear4Bit(nn.Module):
         )
         
         if bias: 
-            self.bias = nn.ParameterDict(torch.zeros(out_features, dtype=torch.float32))
+            self.bias = nn.Parameter(torch.zeros(out_features, dtype=torch.float32))
         else:
             self.register_parameter("bias", None) 
             
@@ -91,4 +91,24 @@ def quantize_4bit(model: nn.Module, group_size: int = 16):
             setattr(model, name, Linear4Bit.from_float(module, group_size))
         else:
             quantize_4bit(module, group_size)
+    return model
+
+def quantize_bnb_4bit(model: nn.Module):
+    try:
+        from bitsandbytes.nn import Linear4bit as BnbLinear4bit
+    except ImportError as e:
+        raise ImportError("We need bitsandbytes for 4-bit quantization. It is currently unavailable") from e
+
+    for name, module in model.named_children():
+        if isinstance(module, nn.Linear):
+            if hasattr(BnbLinear4bit, "from_float"):
+                setattr(model, name, BnbLinear4bit.from_float(module))
+            else:
+                layer = BnbLinear4bit(module.in_features, module.out_features, bias=module.bias is not None)
+                layer.weight.data.copy_(module.weight.data)
+                if module.bias is not None:
+                    layer.bias.data.copy_(module.bias.data)
+                setattr(model, name, layer)
+        else:
+            quantize_bnb_4bit(module)
     return model

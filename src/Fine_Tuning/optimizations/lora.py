@@ -51,7 +51,6 @@ class LoraBFloat16Linear(BFloat16Linear):
         super().__init__(in_features, out_features, bias)
         self.lora_a = torch.nn.Linear(in_features, lora_dim, bias=False)
         self.lora_b = torch.nn.Linear(lora_dim, out_features, bias=False)
-        
         torch.nn.init.kaiming_uniform_(self.lora_a.weight)        
         torch.nn.init.zeros_(self.lora_b.weight)
 
@@ -68,7 +67,6 @@ class LoraBFloat16Linear(BFloat16Linear):
         return super().forward(x) + self.lora_b(self.lora_a(x))
     
 def apply_lora(model: nn.Module, config: Optional[LoraConfig] = None, device: str = "cpu"):
-    
     if config is None:
         config = LoraConfig() 
         
@@ -91,8 +89,6 @@ def apply_lora(model: nn.Module, config: Optional[LoraConfig] = None, device: st
     return lora_model
 
 def apply_lora_peft(model: nn.Module, config: Optional[LoraConfig] = None, device: str = "cpu"):
-    """Apply LoRA using the reference `peft` library."""
-
     from peft import LoraConfig as PeftLoraConfig, get_peft_model, TaskType
 
     if config is None:

@@ -126,7 +126,6 @@ def main():
     model_cls = MODEL_CLASSES[args.model] 
     model = model_cls()
 
-    # 1) build the loader (and optional backbone)
     if args.dataset == "random":
         loader, backbone = load_random_samples(
             args.n_samples, args.batch_size,
@@ -138,7 +137,6 @@ def main():
             device or torch.device("cpu")
         )
 
-    # 2) optionally load a checkpoint into the head
     if args.checkpoint and Path(args.checkpoint).exists():
         print("Loading head weights from", args.checkpoint)
         model.load_state_dict(
@@ -146,7 +144,6 @@ def main():
             strict=True
         )
 
-    # 3) train
     best = fit_binary_classifier(
         model, loader,
         backbone=backbone,
@@ -156,7 +153,6 @@ def main():
     )
     print(f"\nBest acc = {best:.4f}")
 
-    # 4) save
     save_dir = Path(args.save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)
     out = save_dir / f"{args.model}.pth"

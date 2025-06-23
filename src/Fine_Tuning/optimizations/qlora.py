@@ -12,7 +12,7 @@ try:
 except ImportError:
     Linear4bit = None 
     
-from .quantization import Linear4Bit, quantize_bnb_4bit
+from .quantization import Linear4Bit
     
 @dataclass
 class QLoraConfig:
@@ -32,8 +32,6 @@ class QLoRALinear(Linear4Bit):
     ) -> None:
         super().__init__(in_features, out_features, bias, group_size)
         self.requires_grad_(False)
-
-        # TODO: Implement LoRA, initialize the layers, and make sure they are trainable
         self.lora_a = torch.nn.Linear(in_features, lora_dim, bias=False)
         self.lora_b = torch.nn.Linear(lora_dim, out_features, bias=False)
         

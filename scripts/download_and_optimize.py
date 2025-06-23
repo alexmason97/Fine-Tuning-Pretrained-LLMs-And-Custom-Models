@@ -14,7 +14,7 @@ MODEL_NAME = "meta-llama/Llama-3.2-1B"
 
 
 def main() -> None:
-    parser = ArgumentParser(description="Task to Downlaod and optimize the opt-350m model")
+    parser = ArgumentParser(description="Task to Downlaod and optimize the llama model")
     parser.add_argument("prompt", help="Prompt here ot run through the models")
     parser.add_argument(
         "--impl",

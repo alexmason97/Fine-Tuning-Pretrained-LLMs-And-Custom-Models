@@ -53,48 +53,28 @@ def memory_profile(device):
 
 
 def num_parameters(model: torch.nn.Module) -> int:
-    """
-    Number of parameters and buffers in a model.
-    """
     from itertools import chain
-
+    # Number of parameters and buffers in a model.
     return sum(p.numel() for p in chain(model.buffers(), model.parameters()))
 
 
 def mem_parameters(model: torch.nn.Module) -> int:
-    """
-    Memory used for parameters and buffers in a model in bytes.
-    """
     from itertools import chain
-
+    # Memory used for parameters and buffers in a model in bytes.
     return sum(p.numel() * p.element_size() for p in chain(model.buffers(), model.parameters()))
 
 
 @dataclass
 class ModelStats:
     num_parameters: int
-    "Number of parameters in the model"
-
     trainable_parameters: int
-    "Number of trainable parameters in the model"
-
     theoretical_memory: float
-    "Memory usage of the model in MB (theoretical)"
-
     actual_memory: float
-    "Memory usage of the forward pass in MB"
-
     forward_memory: float
-    "Memory usage of the forward pass in MB"
-
     backward_memory: float
-    "Memory usage of the backward pass in MB"
 
     @classmethod
     def from_model(cls, m: torch.nn.Module):
-        """
-        Collect statistics about a model and its memory usage, supporting CPU, CUDA, and MPS.
-        """
         original_device = next(m.parameters()).device
         device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
@@ -132,9 +112,6 @@ class ModelStats:
         )
         
 def model_info(model_name1: str, *model_name2: str):
-    """
-    Return the number of parameters and memory usage of a model.
-    """
     model_names = [model_name1, *model_name2]
     stats = {}
     for model_name in model_names:

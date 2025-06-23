@@ -37,6 +37,9 @@ class LoRAMasoaNet(torch.nn.Module):
             self.MasoaBlock(MASOANET_DIM, lora_dim)
         )
         
+    def forward(self, x):
+        return self.model(x)
+        
 def load_network(path: Path):
     net = LoRAMasoaNet()
     if path is not None:

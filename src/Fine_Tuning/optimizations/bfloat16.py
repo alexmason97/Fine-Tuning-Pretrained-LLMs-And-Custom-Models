@@ -3,7 +3,6 @@ import torch.nn.functional as F
 from torch import nn 
 
 class BFloat16Linear(nn.Linear):
-    
     def __init__(self, in_features: int, out_features: int, bias: bool = True):
         super().__init__(in_features, out_features, bias=bias)
         self.weight.data = self.weight.data.to(torch.bfloat16)
@@ -15,11 +14,7 @@ class BFloat16Linear(nn.Linear):
         
     @classmethod 
     def from_float(cls, module: nn.Linear):
-        """Wanted to keep as BFloat16Linear subclass with inheritence 
-
-        Args:
-            module (nn.Linear): _description_
-        """
+        """Wanted to keep as BFloat16Linear subclass with inheritence"""
         layer = cls(
             module.in_features,
             module.out_features,
@@ -37,7 +32,6 @@ class BFloat16Linear(nn.Linear):
     
     
 def apply_bfloat16(model: nn.Module):
-    
     for name, module in model.named_children():
         if isinstance(module, nn.Linear):
             setattr(model, name, BFloat16Linear.from_float(module))
@@ -47,5 +41,4 @@ def apply_bfloat16(model: nn.Module):
 
 
 def apply_bfloat16_torch(model: nn.Module, device: str = "cpu"):
-    
     return model.to(device=device, dtype=torch.bfloat16)

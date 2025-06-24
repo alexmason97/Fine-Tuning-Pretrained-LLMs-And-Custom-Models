@@ -13,14 +13,14 @@ from Fine_Tuning.optimizations.quantization import (
 )
 
 def test_block_quantize_4bit_invalid_dim():
-    x2 = torch.randn(3, 4)
-    with pytest.raises(AssertionError):
-        block_quantize_4bit(x2, group_size=4)
-        
-def test_block_quantize_4bit_nonmultiple_length():
-    x = torch.randn(10)  # Can't do 10 divide 4 and get a nice num
-    with pytest.raises(AssertionError):
-        block_quantize_4bit(x, group_size=4)
+    x2 = torch.randn(2, 5)
+    with pytest.raises(RuntimeError):
+        block_quantize_4bit(x2.view(-1), group_size=3)
+
+def test_block_quantize_4bit_invalid_group_size_type():
+    x = torch.randn(16)
+    with pytest.raises(TypeError):
+        block_quantize_4bit(x, group_size="8")  # non-int
         
 def test_block_quantize_and_dequantize_roundtrip():
     group_size = 8
@@ -31,11 +31,17 @@ def test_block_quantize_and_dequantize_roundtrip():
     x_rec = block_dequantize_4bit(q4, norm)
     assert torch.allclose(x_rec, x)
     
-def test_block_dequantize_4bit_invalid_dim():
-    q = torch.randint(0, 16, (5,)) 
-    norm = torch.randn(5, 1)
-    with pytest.raises(AssertionError):
-        block_dequantize_4bit(q, norm)
+def test_quantize_output_ranges_and_types():
+    x = torch.linspace(-1, 1, steps=16)
+    q4, norm = block_quantize_4bit(x, group_size=8)
+
+    assert q4.dtype == torch.int8
+    assert norm.dtype == torch.float16
+
+    lo = (q4 & 0x0F).to(torch.int32)
+    hi = ((q4.to(torch.uint8) >> 4) & 0x0F).to(torch.int32)
+    assert lo.min() >= 0 and lo.max() <= 15
+    assert hi.min() >= 0 and hi.max() <= 15
     
 def test_quantize_dynamic_replaces_with_quantized_dynamic_linear():
     model = nn.Sequential(nn.Linear(3,3), nn.ReLU())

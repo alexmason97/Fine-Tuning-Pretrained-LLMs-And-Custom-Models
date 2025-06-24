@@ -88,6 +88,11 @@ def apply_lora(model: nn.Module, config: Optional[LoraConfig] = None, device: st
     lora_model = model.to(device=device, dtype=torch.bfloat16)
     return lora_model
 
+
+
+
+
+
 def apply_lora_peft(model: nn.Module, config: Optional[LoraConfig] = None, device: str = "cpu"):
     from peft import LoraConfig as PeftLoraConfig, get_peft_model, TaskType
 

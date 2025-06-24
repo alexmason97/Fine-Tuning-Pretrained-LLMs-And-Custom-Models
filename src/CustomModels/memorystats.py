@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from pathlib import Path
 import sys 
 import torch
-import io
 
 from . import MasoaNet, bf16MasoaNet, loraMasoaNet, quantMasoaNet, qloraMasoaNet
 
@@ -76,10 +75,7 @@ class ModelStats:
     @classmethod
     def from_model(cls, m: torch.nn.Module):
         original_device = next(m.parameters()).device
-        device = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-
-        if device == "mps":
-            torch.mps.empty_cache()
+        device = "cuda" if torch.cuda.is_available() else "cpu"
 
         m.to("cpu")
         with memory_profile(device) as mem_model:
@@ -97,9 +93,6 @@ class ModelStats:
 
         with memory_profile(device) as mem_backward:
             m(x).mean().backward()
-
-        if device == "mps":
-            torch.mps.empty_cache()
 
         m.to(original_device)
         return cls(

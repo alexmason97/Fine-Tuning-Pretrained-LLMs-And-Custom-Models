@@ -60,7 +60,7 @@ class Linear4Bit(nn.Module):
         if bias:
             self.bias = torch.nn.Parameter(torch.zeros(out_features, dtype=torch.float32))
         
-    def _load_state_dict_pre_hook(self, state_dict, prefix):
+    def _load_state_dict_pre_hook(self, state_dict, local_metadata, strict, missing_keys, unexpected_keys, error_msgs, prefix):
         if f"{prefix}weight" in state_dict:
             weight = state_dict[f"{prefix}weight"]
             del state_dict[f"{prefix}weight"]

@@ -88,21 +88,31 @@ Example output running LLama-3.2-1B in cmd line with sample input for text gener
 Example output for model inference on BFloat16 custom model:
 
 sample cmd line run:
+
 ![Sample CMD Line Script Run](images/example_predict_cmd.JPG)
+
+
 cmd line output:
+
 ![CMD Line Output](images/prediction.JPG)
+
+
 image for prediction:
+
 ![Sample CIFAR10 Image](images/doggy.PNG)
 
 Sample model sizes (too big to upload here):
 
 Original Model Size:
+
 ![Original Model Size](images/Original_model_size.JPG)
 
 LoRA Model Size:
+
 ![Original Model Size](images/lora_model_size.JPG)
 
 QLoRA Model Size:
+
 ![Original Model Size](images/qlora_model_size.JPG)
 
 
